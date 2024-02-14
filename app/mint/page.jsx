@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react';
 import { ethers } from 'ethers';
 import Upload from '@/component/ipfs';
-
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 const contractABI = [
   {
     "name": "safeMint",
@@ -26,37 +27,40 @@ export default function Mint() {
   const [name, setName] = useState('');
   const [symbol, setSymbol] = useState('');
 
-  useEffect(() => {
-    const storedURI = localStorage.getItem("uri");
+  const fetchURI = async () => {
+    const storedURI = localStorage.getItem('uri');
     if (storedURI) {
       setURI(storedURI);
     }
+  };
+
+  useEffect(() => {
+    fetchURI();
   }, []);
 
-  // ...
+  const mintNFT = async () => {
+    try {
+      // Check if window.ethereum is available (MetaMask is installed)
+      if (!window.ethereum) {
+        throw new Error('Please install MetaMask or another Ethereum wallet extension.');
+      }
 
-const mintNFT = async () => {
-  try {
-    // Check if window.ethereum is available (MetaMask is installed)
-    if (!window.ethereum) {
-      throw new Error('Please install MetaMask or another Ethereum wallet extension.');
+      // Connect to the Ethereum network via MetaMask
+      await window.ethereum.enable();
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+
+      // Create a provider connected to the Ethereum network
+      const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+      const tx = await contract.safeMint(toAddress, uri, name, symbol);
+      await tx.wait();
+      localStorage.removeItem('uri');
+      alert('NFT Minted Successfully!');
+    } catch (error) {
+      console.error('Error minting NFT:', error.message);
     }
-
-    // Connect to the Ethereum network via MetaMask
-    await window.ethereum.enable();
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-  const signer = provider.getSigner();
-    // Create a provider connected to the Ethereum network
-    const contract = new ethers.Contract(contractAddress, contractABI, signer);
-
-    const tx = await contract.safeMint(toAddress, uri, name, symbol);
-    await tx.wait();
-
-    alert('NFT Minted Successfully!');
-  } catch (error) {
-    console.error('Error minting NFT:', error.message);
-  }
-};
+  };
 
   return (
     <div className="max-w-md mx-auto bg-white p-8 border rounded-md shadow-md">
@@ -70,7 +74,10 @@ const mintNFT = async () => {
         <Upload />
         <div>
           <label htmlFor="uri" className="block text-sm font-medium text-gray-600">URI</label>
-          <input type="text" id="uri" name="uri" value={uri} onChange={(e) => setURI(e.target.value)} className="mt-1 p-2 w-full border rounded-md" />
+          <div className="flex">
+            <input type="text" id="uri" name="uri" value={uri} onChange={(e) => setURI(e.target.value)} className="mt-1 p-2 w-full border rounded-md"  disabled/>
+            <button type="button" onClick={fetchURI} className="ml-2 bg-blue-500 text-white p-2 rounded-md">Set URI</button>
+          </div>
         </div>
 
         <div>
@@ -83,7 +90,14 @@ const mintNFT = async () => {
           <input type="text" id="symbol" name="symbol" value={symbol} onChange={(e) => setSymbol(e.target.value)} className="mt-1 p-2 w-full border rounded-md" />
         </div>
 
-        <button type="button" onClick={mintNFT} className="bg-blue-500 text-white p-2 rounded-md">Mint NFT</button>
+        <button
+          type="button"
+          onClick={mintNFT}
+          className={`bg-blue-500 text-white p-2 rounded-md ${!toAddress || !uri || !name || !symbol ? 'cursor-not-allowed opacity-50' : ''}`}
+          disabled={!toAddress || !uri || !name || !symbol}
+        >
+          Mint NFT
+        </button>
       </form>
     </div>
   );
