@@ -1,81 +1,68 @@
+'use client';
 import { useState } from 'react';
-import { NFTStorage } from 'nft.storage';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-export default function Upload() {
+import { Upload as UploadIcon, Loader2, Image as ImageIcon, Check } from 'lucide-react';
+
+export default function Upload({ onUploadSuccess }) {
   const [file, setFile] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const NFT_STORAGE_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDAxMmMyMDQxOTMxZjBCMTk5MjRFNjk4NjcxMDE0YzJjYjY4RWNGNjMiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTcwNzc0NjU2NTkxMCwibmFtZSI6IkN5YmVyICJ9.AvvSAu9TIQV5uXXpWZ68c_0j0RGbNbc69aBjDzFDPIs';
-  
-  const client = new NFTStorage({ token: NFT_STORAGE_TOKEN });
-
-  const handleFileChange = (event) => {
-    const selectedFile = event.target.files[0];
-    setFile(selectedFile);
-  };
-
+  const [loading, setLoading] = useState(false);
+  const [cid, setCid] = useState('');
+  const apikey = process.env.NEXT_PUBLIC_NFT_STORAGE_KEY;
   const handleUpload = async () => {
-    if (!file) {
-      alert('Please select a file');
-      return;
-      
-    }
-
-    setIsLoading(true); // Set loading state to true
+    if (!file) return;
+    setLoading(true);
 
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-      const response = await fetch('https://api.nft.storage/upload', {
-        method: 'POST',
+      const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
+        method: "POST",
         headers: {
-          Authorization: `Bearer ${NFT_STORAGE_TOKEN}`,
+          Authorization: `Bearer ${apikey.trim()}`,
         },
         body: formData,
       });
 
-      if (response.ok) {
-        try {
-          const data = await response.json();
-          const cid = data.value.cid;
-          localStorage.setItem("uri", cid);
-          alert('File uploaded successfully!');
-        } catch (jsonError) {
-          console.error('Error parsing JSON:', jsonError);
-          // Handle JSON parsing error if needed
-        }
-      } else {
-        alert('Failed to upload file');
+      const data = await res.json();
+      if (res.ok) {
+        const newCid = data.IpfsHash;
+        setCid(newCid);
+        // Important: Pass the URI back to the Mint page
+        onUploadSuccess(newCid); 
       }
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      alert('unable to upload image')
+    } catch (e) {
+      alert("IPFS Upload Failed");
     } finally {
-      setIsLoading(false); // Set loading state to false, whether the upload succeeded or failed
+      setLoading(false);
     }
   };
 
   return (
-    <div>
-      <label htmlFor="upload" className="block text-sm font-medium text-gray-600">
-        Upload Image
-      </label>
-      <input
-        type="file"
-        id="file"
-        onChange={handleFileChange}
-        className="mt-1 p-2 w-full border rounded-md"
-      />
-      <button
-        type="button"
-        onClick={handleUpload}
-        className={`bg-blue-500 text-white p-2 rounded-md ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-        disabled={isLoading}
-      >
-        {isLoading ? 'Uploading...' : 'Upload'}
-      </button>
+    <div className="space-y-4">
+      <div className={`border-2 border-dashed rounded-[2rem] p-8 text-center transition-all ${cid ? 'border-green-500/50 bg-green-500/5' : 'border-white/10 bg-black/40'}`}>
+        <input type="file" id="art-file" className="hidden" onChange={(e) => setFile(e.target.files[0])} />
+        
+        {!file ? (
+          <label htmlFor="art-file" className="cursor-pointer flex flex-col items-center gap-2">
+            <div className="p-4 bg-white/5 rounded-full"><ImageIcon className="text-slate-400" /></div>
+            <span className="text-sm font-medium text-slate-400">Select NFT Media</span>
+          </label>
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            {cid ? <Check className="text-green-500 w-10 h-10" /> : <UploadIcon className="text-yellow-500 w-10 h-10" />}
+            <span className="text-xs font-mono text-slate-300 truncate max-w-[200px]">{file.name}</span>
+            {!cid && (
+              <button 
+                onClick={handleUpload} 
+                disabled={loading}
+                className="mt-2 text-xs bg-white text-black px-4 py-2 rounded-full font-bold hover:bg-yellow-400"
+              >
+                {loading ? <Loader2 className="animate-spin h-3 w-3" /> : "Start Upload"}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
