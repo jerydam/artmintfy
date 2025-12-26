@@ -1,113 +1,87 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { ethers } from 'ethers';
-import { Users, ExternalLink, RefreshCw, ImageIcon, Hash } from 'lucide-react';
+import { Users, ExternalLink, RefreshCw, ImageIcon, Globe } from 'lucide-react';
+import { NETWORKS } from '@/lib/networks'; // Your new networks config
 
-// 1. YOUR FACTORY ADDRESS
-const factoryAddress = '0x3B89f439D32936A8dcB22aD8971ecd0FcAE5834d'; 
-const rpcUrl = "https://forno.celo.org";
+const factoryAddress = '0xd4be7508211967E45538F23D304E8B8789A1C62d'; 
 
-// 2. THE FACTORY ABI (From your last message)
 const factoryABI = [
-  {
-    "inputs": [
-      { "internalType": "string", "name": "_name", "type": "string" },
-      { "internalType": "string", "name": "_symbol", "type": "string" },
-      { "internalType": "string", "name": "_uri", "type": "string" }
-    ],
-    "name": "deployNFT",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getDeployedNFTs",
-    "outputs": [{ "internalType": "address[]", "name": "", "type": "address[]" }],
-    "stateMutability": "view",
-    "type": "function"
-  }
+  "function getDeployedNFTs() view returns (address[])",
+  "function deployDeterministic(string _name, string _symbol, string _uri, bytes32 salt) public returns (address)"
 ];
 
-// 3. THE INDIVIDUAL NFT ABI (To get name/URI from each CA)
 const nftAbi = [
   "function name() view returns (string)",
   "function symbol() view returns (string)",
   "function tokenURI(uint256) view returns (string)"
 ];
 
-function AddressRow({ addr, index }) {
+function AddressRow({ addr, index, currentRpc, activeNetwork }) {
   const [nftData, setNftData] = useState({ name: '', symbol: '', image: '', loading: true });
+  const explorerUrl = NETWORKS[activeNetwork]?.blockExplorerUrls[0] || "https://celoscan.io";
 
   useEffect(() => {
     const fetchNftDetails = async () => {
       try {
-        const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
+        const provider = new ethers.providers.JsonRpcProvider(currentRpc);
         const contract = new ethers.Contract(addr, nftAbi, provider);
 
         const [name, symbol, rawUri] = await Promise.all([
           contract.name(),
           contract.symbol(),
-          contract.tokenURI(1).catch(() => "") // Assuming token ID 1
+          contract.tokenURI(1).catch(() => "")
         ]);
 
-        // Convert IPFS URI to HTTP Gateway
-        let imageUrl = rawUri;
-        if (rawUri.startsWith('ipfs://')) {
-          imageUrl = rawUri.replace('ipfs://', 'https://ipfs.io/ipfs/');
-        } else if (!rawUri.startsWith('http')) {
-          imageUrl = `https://ipfs.io/ipfs/${rawUri}`;
-        }
+        let imageUrl = rawUri.startsWith('ipfs://') 
+          ? rawUri.replace('ipfs://', 'https://ipfs.io/ipfs/') 
+          : rawUri.startsWith('http') ? rawUri : `https://ipfs.io/ipfs/${rawUri}`;
 
         setNftData({ name, symbol, image: imageUrl, loading: false });
       } catch (e) {
-        console.error("Row Error:", e);
-        setNftData({ name: 'Untitled NFT', symbol: 'NFT', image: null, loading: false });
+        setNftData({ name: 'Unique Collection', symbol: 'NFT', image: null, loading: false });
       }
     };
     fetchNftDetails();
-  }, [addr]);
+  }, [addr, currentRpc]);
 
   return (
     <div className="group p-5 bg-slate-900/50 border border-white/5 rounded-[2rem] hover:border-yellow-500/30 transition-all flex flex-col md:flex-row items-center gap-6">
-      {/* NFT Image Preview */}
-      <div className="w-28 h-28 bg-black rounded-2xl overflow-hidden flex-shrink-0 border border-white/10 shadow-inner">
+      <div className="w-24 h-24 bg-black rounded-2xl overflow-hidden flex-shrink-0 border border-white/10 relative">
         {nftData.image ? (
           <img src={nftData.image} alt={nftData.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <ImageIcon className="text-slate-800" size={32} />
+          <div className="w-full h-full flex items-center justify-center bg-slate-800">
+            <ImageIcon className="text-slate-600" size={24} />
           </div>
         )}
       </div>
 
-      <div className="flex-grow overflow-hidden text-center md:text-left">
-        <div className="flex flex-wrap justify-center md:justify-start items-center gap-2 mb-2">
-          <h4 className="text-xl font-bold text-white tracking-tight truncate max-w-[200px]">
-            {nftData.loading ? "Loading..." : nftData.name}
-          </h4>
-          {!nftData.loading && (
-            <span className="text-[10px] font-black bg-yellow-500/10 text-yellow-500 px-2 py-1 rounded-lg border border-yellow-500/20">
-              {nftData.symbol}
-            </span>
-          )}
+      <div className="flex-grow text-center md:text-left overflow-hidden">
+        <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+          <h4 className="text-xl font-bold text-white truncate">{nftData.name}</h4>
+          <span className="text-[10px] px-2 py-0.5 rounded bg-yellow-500/10 text-yellow-500 font-mono">
+            {nftData.symbol}
+          </span>
+          <span className="text-[10px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono uppercase">
+            {activeNetwork}
+          </span>
         </div>
-        
-        <div className="flex flex-col gap-1">
-          <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">Contract Address</p>
-          <code className="text-[11px] text-slate-400 font-mono truncate bg-black/30 p-2 rounded-lg border border-white/5">
-            {addr}
-          </code>
-        </div>
+        <p className="text-[10px] text-slate-500 font-mono mb-1 uppercase tracking-widest">Deterministic CA</p>
+        <code className="text-[11px] text-slate-400 font-mono block truncate bg-black/40 p-2 rounded-lg">
+          {addr}
+        </code>
       </div>
 
-      <a 
-        href={`https://celoscan.io/address/${addr}`} 
-        target="_blank" 
-        className="p-4 bg-white/5 hover:bg-yellow-500 hover:text-black rounded-2xl transition-all group-hover:shadow-lg group-hover:shadow-yellow-500/10"
-      >
-        <ExternalLink size={20} />
-      </a>
+      <div className="flex gap-2">
+        <a 
+          href={`${explorerUrl}/address/${addr}`} 
+          target="_blank" 
+          className="p-4 bg-white/5 hover:bg-yellow-500 hover:text-black rounded-2xl transition-all"
+        >
+          <ExternalLink size={18} />
+        </a>
+      </div>
     </div>
   );
 }
@@ -115,52 +89,83 @@ function AddressRow({ addr, index }) {
 export default function AddressList() {
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [activeNetwork, setActiveNetwork] = useState('celo');
   const loadData = async () => {
-    setLoading(true);
-    try {
-      const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
-      const factory = new ethers.Contract(factoryAddress, factoryABI, provider);
-      const list = await factory.getDeployedNFTs();
-      setContracts([...list].reverse());
-    } catch (err) {
-      console.error("Factory fetch failed:", err);
-    } finally {
+  setLoading(true);
+  try {
+    const network = NETWORKS[activeNetwork];
+    const provider = new ethers.providers.JsonRpcProvider(network.rpcUrls[0]);
+    
+    // Check if the Factory exists on this specific chain
+    const code = await provider.getCode(factoryAddress);
+    if (code === "0x" || code === "0x0") {
+      console.warn(`Factory not found on ${activeNetwork} at ${factoryAddress}`);
+      setContracts([]);
       setLoading(false);
+      return;
     }
-  };
 
-  useEffect(() => { loadData(); }, []);
+    const factory = new ethers.Contract(factoryAddress, factoryABI, provider);
+    const list = await factory.getDeployedNFTs();
+    setContracts([...list].reverse());
+  } catch (err) {
+    console.error(`Error on ${activeNetwork}:`, err.message);
+    setContracts([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
+  useEffect(() => { loadData(); }, [activeNetwork]);
 
   return (
     <div className="max-w-4xl mx-auto py-16 px-6">
-      <div className="flex justify-between items-end mb-12">
+      {/* Header & Network Switcher */}
+      <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12">
         <div>
           <h2 className="text-5xl font-black italic tracking-tighter text-white uppercase">
             Art<span className="text-yellow-500">Explorer</span>
           </h2>
-          <p className="text-slate-500 mt-2 font-medium">Discover unique NFT contracts deployed on Celo</p>
+          <div className="flex gap-2 mt-4 overflow-x-auto pb-2 no-scrollbar max-w-md">
+            {['celo', 'base', 'arbitrum', 'polygon','optimism', 'lisk'].map((net) => (
+              <button
+                key={net}
+                onClick={() => setActiveNetwork(net)}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase transition-all ${
+                  activeNetwork === net 
+                  ? 'bg-yellow-500 text-black' 
+                  : 'bg-white/5 text-slate-500 hover:bg-white/10'
+                }`}
+              >
+                {net}
+              </button>
+            ))}
+          </div>
         </div>
         <button onClick={loadData} className="p-4 bg-slate-800 rounded-2xl hover:bg-yellow-500 hover:text-black transition-all">
           <RefreshCw size={24} className={loading ? "animate-spin" : ""} />
         </button>
       </div>
 
+      {/* List */}
       <div className="space-y-6">
         {loading ? (
-          <div className="py-24 text-center">
-            <div className="inline-block animate-bounce bg-yellow-500 w-3 h-3 rounded-full mr-2"></div>
-            <div className="inline-block animate-bounce bg-yellow-500 w-3 h-3 rounded-full mr-2 [animation-delay:0.2s]"></div>
-            <div className="inline-block animate-bounce bg-yellow-500 w-3 h-3 rounded-full [animation-delay:0.4s]"></div>
-            <p className="mt-4 text-xs font-bold text-slate-600 tracking-[0.3em]">READING BLOCKCHAIN</p>
+          <div className="py-24 text-center text-slate-600 uppercase text-xs font-bold tracking-[0.3em] animate-pulse">
+            Syncing Ledger...
           </div>
         ) : contracts.length === 0 ? (
           <div className="text-center py-24 border-2 border-dashed border-white/5 rounded-[3rem]">
-            <p className="text-slate-600 font-bold uppercase tracking-widest text-sm">No Contracts Found</p>
+            <p className="text-slate-600 font-bold uppercase tracking-widest text-sm">No Deployed Contracts on {activeNetwork}</p>
           </div>
         ) : (
           contracts.map((addr, i) => (
-            <AddressRow key={addr} addr={addr} index={contracts.length - i} />
+           <AddressRow 
+            key={`${activeNetwork}-${addr}`} 
+            addr={addr} 
+            index={contracts.length - i}
+            currentRpc={NETWORKS[activeNetwork].rpcUrls[0]}
+            activeNetwork={activeNetwork} // <--- ADD THIS LINE
+          />
           ))
         )}
       </div>
