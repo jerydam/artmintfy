@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import { ExternalLink, RefreshCw, ImageIcon } from 'lucide-react';
 import { NETWORKS } from '@/lib/networks';
 
-const factoryAddress = '0xd4be7508211967E45538F23D304E8B8789A1C62d';
+const factoryAddress = '0xE66Ac37142f2e15e96E604BF5B861a304C4fedC4';
 const factoryABI = [
   "function getDeployedNFTs() view returns (address[])",
   "function deployDeterministic(string _name, string _symbol, string _uri, bytes32 salt) public returns (address)"

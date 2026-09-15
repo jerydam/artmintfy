@@ -33,7 +33,7 @@ export default function MultiChainMint() {
           // Network switching logic...
           const activeProvider = new ethers.providers.Web3Provider(window.ethereum);
           const factory = new ethers.Contract(
-            "0xd4be7508211967E45538F23D304E8B8789A1C62d", 
+            "0xE66Ac37142f2e15e96E604BF5B861a304C4fedC4", 
             ["function deployDeterministic(string _name, string _symbol, string _uri, bytes32 salt) public returns (address)"], 
             activeProvider.getSigner()
           );
