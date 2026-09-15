@@ -36,6 +36,7 @@ export default function RootLayout({ children }) {
                 <Link href="/all-address" className="text-sm font-medium hover:text-yellow-400 transition-colors flex items-center gap-2">
                   <LayoutDashboard size={18} /> Activity
                 </Link>
+                <WalletConnect />
               </div>
 
               {/* Mobile Hamburger */}

@@ -9,31 +9,24 @@ export default function WalletConnect() {
   const [network, setNetwork] = useState(null);
 
   const connect = async () => {
-    if (!window.ethereum) return alert("Please install MetaMask");
-    try {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      
-      // Request network switch
-      try {
-        await window.ethereum.request({
-          method: 'wallet_addEthereumChain',
-          params: [DEFAULT_CHAIN],
-        });
-      } catch (e) {
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: DEFAULT_CHAIN.chainId }],
-        });
-      }
+  if (!window.ethereum) return alert('Please install MetaMask');
+  try {
+    // wallet_addEthereumChain both adds AND switches — no need for two calls
+    await window.ethereum.request({
+      method: 'wallet_addEthereumChain',
+      params: [DEFAULT_CHAIN],
+    });
 
-      const accounts = await provider.send("eth_requestAccounts", []);
-      setAccount(accounts[0]);
-      const net = await provider.getNetwork();
-      setNetwork(net);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const accounts = await provider.send('eth_requestAccounts', []);
+    setAccount(accounts[0]);
+
+    const net = await provider.getNetwork();
+    setNetwork(net);
+  } catch (err) {
+    console.error('Wallet connect failed:', err);
+  }
+};
 
   if (account) {
     return (
