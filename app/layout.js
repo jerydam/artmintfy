@@ -21,7 +21,8 @@ export default function RootLayout({ children }) {
               <p className="text-slate-500 text-sm mt-1">Built by Jerydam</p>
             </div>
             <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-400">
-              <a href="https://alfajores.celoscan.io/" target="_blank" rel="noopener noreferrer" className="hover:text-yellow-400 transition-colors">Explorer</a>
+              <a href="https://botchain.ai" target="_blank" rel="noopener noreferrer" className="hover:text-yellow-400 transition-colors">BOT Chain</a>
+              <a href="https://scan.botchain.ai" target="_blank" rel="noopener noreferrer" className="hover:text-yellow-400 transition-colors">Explorer</a>
               <a href="#" className="hover:text-yellow-400 transition-colors">Documentation</a>
               <a href="#" className="hover:text-yellow-400 transition-colors">Privacy</a>
             </div>

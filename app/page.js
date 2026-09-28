@@ -14,9 +14,9 @@
         {/* Hero Section */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-20 md:pt-32 pb-20 flex flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 text-xs font-medium mb-6">
-            <Sparkles size={14} />
-            <span>Powered by Celo Network</span>
-          </div>
+          <Sparkles size={14} />
+          <span>Powered by BOT Chain</span>
+        </div>
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter mb-6 bg-gradient-to-b from-white to-gray-500 bg-clip-text text-transparent">
             ArtMintify
           </h1>
@@ -60,7 +60,7 @@
               </div>
               <div className="text-left">
                 <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Network Status</p>
-                <p className="text-sm font-mono text-green-400">Celo Alfajores Live</p>
+                <p className="text-sm font-mono text-green-400">BotChain Live</p>
               </div>
             </div>
           </div>
@@ -75,7 +75,7 @@
             </div>
             <div className="p-8 rounded-3xl bg-white/5 border border-white/5 hover:border-white/10 transition-all">
               <h3 className="text-xl font-bold mb-3">Low Gas Fees</h3>
-              <p className="text-gray-500 text-sm">Enjoy Celo&apos;s ultra-low transaction costs, making NFT creation accessible to everyone.</p>
+              <p className="text-gray-500 text-sm">Enjoy BOT Chain&apos;s ultra-low transaction costs, making NFT creation accessible to everyone.</p>
             </div>
             <div className="p-8 rounded-3xl bg-white/5 border border-white/5 hover:border-white/10 transition-all">
               <h3 className="text-xl font-bold mb-3">Smart Verification</h3>
